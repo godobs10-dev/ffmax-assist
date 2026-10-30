@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FF Assist</title>
+<style>
+  :root {
+    --bg:#0a0a0f;--surface:#111118;--border:#1e1e2e;
+    --accent:#ff4d00;--accent2:#ff8c00;--text:#e0e0e0;
+    --muted:#555570;--off:#2a2a3a;--radius:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+  header{width:100%;max-width:360px;display:flex;align-items:center;gap:10px;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+  .logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);flex-shrink:0}
+  header h1{font-size:13px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;font-weight:400}
+  header span{margin-left:auto;font-size:11px;color:var(--muted)}
+  .status-bar{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:20px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:#00ff88;box-shadow:0 0 6px #00ff88;flex-shrink:0}
+  #status-text{flex:1}
+  .card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+  .card-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+  .card-header .label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);flex:1}
+  .card-header .badge{font-size:9px;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--muted);text-transform:uppercase}
+  .card-body{padding:14px 16px}
+  .feature-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+  .feature-row+.feature-row{border-top:1px solid var(--border)}
+  .feature-info{flex:1}
+  .feature-name{font-size:13px;color:var(--text);margin-bottom:3px}
+  .feature-desc{font-size:10px;color:var(--muted);line-height:1.4}
+  .toggle{position:relative;width:44px;height:24px;flex-shrink:0;margin-left:12px}
+  .toggle input{display:none}
+  .toggle-track{width:44px;height:24px;background:var(--off);border-radius:12px;cursor:pointer;transition:background .2s;border:1px solid var(--border);display:flex;align-items:center;padding:2px}
+  .toggle input:checked+.toggle-track{background:var(--accent);border-color:var(--accent)}
+  .toggle-thumb{width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s}
+  .toggle input:checked+.toggle-track .toggle-thumb{transform:translateX(20px)}
+  #countdown-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);justify-content:center;align-items:center;flex-direction:column;gap:12px;z-index:100}
+  #countdown-overlay.active{display:flex}
+  #countdown-num{font-size:72px;color:var(--accent);text-shadow:0 0 30px var(--accent);font-weight:700;line-height:1}
+  #countdown-label{font-size:12px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+  .inject-ring{width:100px;height:100px;position:absolute;border:2px solid var(--accent);border-radius:50%;opacity:.2;animation:pulse 1s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(.8);opacity:.4}100%{transform:scale(1.6);opacity:0}}
+  .log-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:10px;color:var(--muted);height:90px;overflow-y:auto;line-height:1.7;margin-top:8px}
+  .log-entry{color:var(--muted)}.log-entry.ok{color:#00ff88}.log-entry.err{color:#ff4d4d}.log-entry.info{color:var(--accent2)}
+  footer{margin-top:24px;font-size:9px;color:#2a2a3a;letter-spacing:.08em}
+</style>
+</head>
+<body>
+<header><div class="logo-dot"></div><h1>FF Assist</h1><span id="clock">--:--:--</span></header>
+<div class="status-bar"><div class="status-dot"></div><span id="status-text">serviço ativo — aguardando injeção</span></div>
+<div class="card">
+  <div class="card-header"><span class="label">auxílio de mira</span><span class="badge" id="aim-badge">off</span></div>
+  <div class="card-body"><div class="feature-row"><div class="feature-info"><div class="feature-name">Shoulder Aim</div><div class="feature-desc">gruda no ombro/pescoço — meio a meio entre cabeça e peito</div></div><label class="toggle"><input type="checkbox" id="toggle-aim" onchange="handleToggle('aim',this.checked)"><div class="toggle-track"><div class="toggle-thumb"></div></div></label></div></div>
+</div>
+<div class="card">
+  <div class="card-header"><span class="label">ESP</span><span class="badge" id="esp-badge">off</span></div>
+  <div class="card-body"><div class="feature-row"><div class="feature-info"><div class="feature-name">Box ESP</div><div class="feature-desc">quadrado ao redor dos inimigos via overlay</div></div><label class="toggle"><input type="checkbox" id="toggle-esp" onchange="handleToggle('esp',this.checked)"><div class="toggle-track"><div class="toggle-thumb"></div></div></label></div></div>
+</div>
+<div class="log-box" id="log"></div>
+<footer>ff max assist · android overlay · sem root</footer>
+<div id="countdown-overlay"><div class="inject-ring"></div><div id="countdown-num">3</div><div id="countdown-label">injetando em...</div></div>
+<script>
+const BASE='http://localhost:8765';
+let pendingFeature=null,pendingState=false;
+function log(msg,type=''){const box=document.getElementById('log');const d=document.createElement('div');d.className='log-entry '+type;const t=new Date().toLocaleTimeString('pt-BR');d.textContent=`[${t}] ${msg}`;box.appendChild(d);box.scrollTop=box.scrollHeight}
+function setBadge(id,on){const b=document.getElementById(id+'-badge');b.textContent=on?'on':'off';b.style.color=on?'var(--accent)':'';b.style.borderColor=on?'var(--accent)':''}
+function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR')}
+setInterval(updateClock,1000);updateClock();
+function handleToggle(feature,state){pendingFeature=feature;pendingState=state;if(state){startCountdown()}else{sendCommand(feature,false)}}
+function startCountdown(){const overlay=document.getElementById('countdown-overlay');const num=document.getElementById('countdown-num');overlay.classList.add('active');let count=3;num.textContent=count;const interval=setInterval(()=>{count--;if(count<=0){clearInterval(interval);overlay.classList.remove('active');sendCommand(pendingFeature,pendingState)}else{num.textContent=count}},1000)}
+async function sendCommand(feature,state){const label=feature==='aim'?'shoulder aim':'box esp';log(`${state?'ativando':'desativando'} ${label}...`,'info');try{const res=await fetch(`${BASE}/cmd`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feature,state})});const data=await res.json();if(data.ok){setBadge(feature,state);log(`${label} ${state?'ativo':'desativado'}`,state?'ok':'');document.getElementById('status-text').textContent=state?`${label} rodando`:'aguardando injeção'}else{throw new Error(data.error||'resposta inválida')}}catch(e){log(`erro: ${e.message} — APK rodando?`,'err');document.getElementById(`toggle-${feature}`).checked=!state;setBadge(feature,!state)}}
+</script>
+</body>
+</html>
